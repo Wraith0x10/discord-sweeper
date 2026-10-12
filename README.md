@@ -19,26 +19,46 @@ Go through your Discord friends and servers one at a time.
 
 ![Login screen](docs/screenshots/login.png)
 
-## Setup
+## Run it
+
+### Windows: download the .exe (easiest)
+
+1. Go to the [Releases page](https://github.com/Wraith0x10/discord-sweeper/releases/latest) and download `DiscordSweeper.exe`.
+2. Double-click it. Your browser opens the app automatically.
+3. Paste your Discord token and start reviewing.
+
+Keep the black console window open while you use the app. Close it to quit. Nothing needs to be installed.
+
+Windows may show **"Windows protected your PC"** the first time, because the .exe isn't code-signed. Click **More info**, then **Run anyway**.
+
+The app saves your kept lists in a `data` folder next to the .exe. Keep the .exe in the same folder if you want those lists remembered.
+
+### Any system: run from source
 
 1. Install [Node.js](https://nodejs.org) 18 or newer. The LTS version is fine.
-2. Download this project. Either click **Code → Download ZIP** on GitHub and extract it, or clone it:
+2. Download this project. Either click **Code → Download ZIP** and extract it, or clone it:
 
    ```
    git clone https://github.com/Wraith0x10/discord-sweeper.git
    ```
 
-There are no dependencies to install.
+3. On Windows, double-click `start.bat`. On any system, you can also run this in the project folder:
 
-## Run it
+   ```
+   node server.js --open
+   ```
 
-On Windows, double-click `start.bat`. On any system, you can also run this in the project folder:
+There are no dependencies to install. The app runs at http://127.0.0.1:4783.
+
+### Build the .exe yourself
+
+On Windows with Node.js 20 or newer, run this in the project folder:
 
 ```
-node server.js
+npm run build:exe
 ```
 
-Then open http://127.0.0.1:4783 and paste your Discord token.
+The result is `dist/DiscordSweeper.exe`. It bundles the Node.js runtime, so it's about 90 MB.
 
 ## What it shows
 

@@ -8,8 +8,14 @@ const path = require('path');
 const PORT = Number(process.env.PORT) || 4783;
 const HOST = '127.0.0.1';
 const API = process.env.DISCORD_API || 'https://discord.com/api/v9'; // override only for local testing
+// When packaged as a single .exe, the web page is embedded in the executable
+// and saved data lives in a "data" folder next to the .exe.
+const sea = (() => { try { return require('node:sea'); } catch { return null; } })();
+const IS_EXE = !!(sea && sea.isSea());
+const APP_DIR = IS_EXE ? path.dirname(process.execPath) : __dirname;
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const DATA_FILE = path.join(__dirname, 'data', 'kept.json');
+const DATA_FILE = path.join(APP_DIR, 'data', 'kept.json');
+const SHOULD_OPEN_BROWSER = (IS_EXE || process.argv.includes('--open')) && !process.argv.includes('--no-open');
 const DISCORD_EPOCH = 1420070400000n;
 
 // ---------------------------------------------------------------------------
@@ -244,10 +250,20 @@ const MIME = {
   '.png': 'image/png',
 };
 
+const EMBEDDED_FILES = new Set(['index.html', 'styles.css', 'app.js']);
+
 function serveStatic(req, res) {
   const urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  const file = path.normalize(path.join(PUBLIC_DIR, urlPath === '/' ? 'index.html' : urlPath));
-  if (!file.startsWith(PUBLIC_DIR)) { res.writeHead(403); return res.end(); }
+  const rel = urlPath === '/' ? 'index.html' : urlPath.replace(/^\/+/, '');
+
+  if (IS_EXE) {
+    if (!EMBEDDED_FILES.has(rel)) { res.writeHead(404); return res.end('Not found'); }
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(rel)], 'Cache-Control': 'no-store' });
+    return res.end(Buffer.from(sea.getAsset(`public/${rel}`)));
+  }
+
+  const file = path.normalize(path.join(PUBLIC_DIR, rel));
+  if (!file.startsWith(PUBLIC_DIR + path.sep)) { res.writeHead(403); return res.end(); }
   fs.readFile(file, (err, buf) => {
     if (err) { res.writeHead(404); return res.end('Not found'); }
     res.writeHead(200, {
@@ -486,6 +502,29 @@ const server = http.createServer(async (req, res) => {
   serveStatic(req, res);
 });
 
+const APP_URL = `http://${HOST}:${PORT}`;
+
+function openBrowser(url) {
+  const { spawn } = require('child_process');
+  const [cmd, args] = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
+    : process.platform === 'darwin' ? ['open', [url]]
+    : ['xdg-open', [url]];
+  try { spawn(cmd, args, { detached: true, stdio: 'ignore', windowsHide: true }).unref(); } catch {}
+}
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    // Most likely the app is already running: just bring up the page.
+    console.log(`Discord Sweeper is already running at ${APP_URL}`);
+    if (SHOULD_OPEN_BROWSER) openBrowser(APP_URL);
+    setTimeout(() => process.exit(0), 1500);
+    return;
+  }
+  throw err;
+});
+
 server.listen(PORT, HOST, () => {
-  console.log(`Discord Sweeper running at http://${HOST}:${PORT}`);
+  console.log(`Discord Sweeper running at ${APP_URL}`);
+  if (IS_EXE) console.log('Keep this window open while you use the app. Close it to quit.');
+  if (SHOULD_OPEN_BROWSER) openBrowser(APP_URL);
 });
