@@ -1,0 +1,16 @@
+# Personal data: your Discord account ID and kept friend/server IDs
+data/
+
+# Local files that are not part of the app
+app example.png
+node_modules/
+*.log
+.env
+.env.*
+
+# OS / editor clutter
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

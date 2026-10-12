@@ -1,0 +1,13 @@
+{
+  "name": "discord-sweeper",
+  "version": "1.0.0",
+  "description": "Review your Discord friends and servers one at a time.",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
